@@ -302,8 +302,30 @@ This change would be only to make sure a notification is always displayed immedi
 
 ## Impact on existing code
 
-Describe the impact that this change will have on existing code. Will some SDL integrations stop compiling due to this change? Will applications still compile but produce different behavior than they used to? Is it possible to migrate existing SDL code to use a new feature or API automatically?
-
 ## Alternatives considered
 
-Describe alternative approaches to addressing the same problem, and why you chose this approach instead.
+### Foreground Services
+
+Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptiions listed by google. These conditions include:
+
+* Starting the Service from an Activity.
+* Starting the Service from a user interaction with a notification
+* Requesting the user ignores battery optimizations for each SDL Application
+
+These options would either recquire and Activity be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService conencts.
+
+### Bluetooth Runtime Permissions
+
+These permissions are required to be able to receive intents withe the `ACL_CONNECTED` action in the BroadcastReceiver and to start the bluetoothTransport in the RouterService. Without these permissions we cannot know when the device connects to a device over Bluetooth nor will the RouterService be able to connect over Bluetooth.
+
+### AndroidManifest Exported Flag
+
+For the cases where this attribute is now required by Android 12. We already required developers to include this attribute.
+
+### PendingIntent Mutable Flag
+
+The one case where PendingIntents were being used previously in the library we can set the flag to be `PendingIntent.FLAG_MUTABLE` but as we are handing the PendingIntent off to the notificationManager and the intent does not need to be changed at any point we should use `PendingIntent.FLAG_IMMUTABLE`.
+
+### Service Notification Delays
+
+We can leave the notification implementations unchanged and Android would simply delay displaying them if the service they are related to is still running.

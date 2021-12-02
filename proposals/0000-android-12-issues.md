@@ -212,8 +212,33 @@ private void showBTPermissionsNotification() {
 ~~~
 
 ### AndroidManifest Exported Flag
+
+Starting in Android 12 any activities, services, or broadcast receivers that use intent filters will need to explicitly declare the `android:exported` attribute for the given app components. The `SdlRouterService` and `SdlReceiver` should already have the exported attribute defined and set to true. But The `USBAccessoryAttachmentActivity` will now also require this attribute to be set. Any activity that had an `intent-filter` would have a default exported value of true. Now we need to explicitly set it.
+
+~~~ xml
+
+<activity
+    android:name="com.smartdevicelink.transport.USBAccessoryAttachmentActivity"
+    android:exported="true"
+    android:launchMode="singleTop">
+    <intent-filter>
+        <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
+    </intent-filter>
+
+    <meta-data
+        android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
+        android:resource="@xml/accessory_filter" />
+</activity>
+
+~~~
+
 ### PendingIntent Mutable Flag
+
+
+
 ### Service Notification Delays
+
+
 
 ## Potential downsides
 

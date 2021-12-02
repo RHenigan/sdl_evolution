@@ -245,7 +245,38 @@ PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, flag);
 
 ### Service Notification Delays
 
+Starting in Android 12 when a service tries to present a notification, Android may delay showing the notification for up to 10 seconds. This is to try to allow the service to complete before the notification is presented. If we have connected to a system before we may want to present the RouterService notifications immediately. App developers may also want to display the notifications related to the `SdlService` immediately. This can be achieved by setting the foregroundServiceBehavior flag to `Notification.FOREGROUND_SERVICE_IMMEDIATE`.
 
+~~~ java
+
+private void safeStartForeground(int id, Notification notification) {
+    try {
+        if (notification == null) {
+            if (hasConnectedBefore && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                Notification.Builder builder =
+                        new Notification.Builder(this, SDL_NOTIFICATION_CHANNEL_ID)
+                            .setContentTitle("SmartDeviceLink")
+                            .setContentText("Service Running")
+                            .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);
+                notification = builder.build();
+            } else {
+                //Try the NotificationCompat this time in case there was a previous error
+                NotificationCompat.Builder builder =
+                        new NotificationCompat.Builder(this, SDL_NOTIFICATION_CHANNEL_ID)
+                                .setContentTitle("SmartDeviceLink")
+                                .setContentText("Service Running");
+
+                notification = builder.build();
+            }
+        }
+        startForeground(id, notification);
+        DebugTool.logInfo(TAG, "Entered the foreground - " + System.currentTimeMillis());
+    } catch (Exception e) {
+        DebugTool.logError(TAG, "Unable to start service in foreground", e);
+    }
+}
+
+~~~
 
 ## Potential downsides
 

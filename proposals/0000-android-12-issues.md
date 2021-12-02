@@ -234,7 +234,14 @@ Starting in Android 12 any activities, services, or broadcast receivers that use
 
 ### PendingIntent Mutable Flag
 
+In Android 12, you must specify the mutability of each PendingIntent object that your app creates. This will impact the notifications that the RouterService is trying to display, As we do not need to update these intents at anypoint we can flag them with `FLAG_IMMUTABLE`.
 
+~~~ java
+
+int flag = android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0;
+PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, flag);
+
+~~~
 
 ### Service Notification Delays
 

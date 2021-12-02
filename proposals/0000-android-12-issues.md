@@ -7,7 +7,7 @@
 
 ## Introduction
 
-This proposal is to address the issues that have been introduced as a result of Android 12.
+With almost every Android version, Google updates the OS to better distribute the device resources among the running apps to enhance the performance and optimize battery life. However, sometimes the new enhancements come with new restrictions on how apps can use the resources on the device. Android 12 is one of the major Android updates that heavily modify how apps can run in the background and use device resources. This affects how the `RouterService` starts and communicates with other SDL apps and also how the `SdlService ` for SDL apps is started. This proposal is to address the issues that have been introduced as a result of Android 12.
 
 ## Motivation
 

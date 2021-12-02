@@ -302,6 +302,28 @@ This change would be only to make sure a notification is always displayed immedi
 
 ## Impact on existing code
 
+### Foreground Services
+
+The RouterService currently sends an intent out for each apps BroadcastReceiver which notifies the apps to start the `SdlService`. If the app targets Android 12 and tries to start the `SdlService` from the background like this the app will crash. We will need to add a PendingIntent as an extra to this intent to be used by the `SdlReceiver`
+These changes will require app developers to change how they implement the `SdlReceiver.onReceive` method to check the incoming intent for a pendingIntent and send that pendingIntent with the appropriate class name.
+This implementation will also require the `SdlService` to have the `android:exported` attribute set to `true` in the `AndroidManifest.xml`.
+
+### Bluetooth Runtime Permissions
+
+The bluetooth logic in the library will now require these 2 new runtime permissions. With these permissions granted there is not any issue with the bluetooth logic but we now need to account for the use cases where a user has denied permissions. Specifically without these permissions the `BroadcastReceiver` will never receive Intents with the `ACL_CONNECTED` action and the `RouterService` will not be able to start the bluetoothTransport.
+
+### AndroidManifest Exported Flag
+
+These attributes were already defined where required. 
+
+### PendingIntent Mutable Flag
+
+The RouterService will crash if the the app targets android 12 and does not have this flag defined on the PendingIntent used for RouterService notifications.
+
+### Service Notification Delays
+
+These notifications may be delayed by Android by up to 10 seconds
+
 ## Alternatives considered
 
 ### Foreground Services

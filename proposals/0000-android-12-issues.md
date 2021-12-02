@@ -280,7 +280,25 @@ private void safeStartForeground(int id, Notification notification) {
 
 ## Potential downsides
 
-Describe any potential downsides or known objections to the course of action presented in this proposal, then provide counter-arguments to these objections. You should anticipate possible objections that may come up in review and provide an initial response here. Explain why the positives of the proposal outweigh the downsides, or why the downside under discussion is not a large enough issue to prevent the proposal from being accepted.
+### Foreground Services
+
+With the proposed solution of using PendingIntents to start the apps `SdlService` from the RouterService this creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stoping developers from listing that custom permission in their `AndroidManifest.xml`.   
+
+### Bluetooth Runtime Permissions
+
+With the new runtime permissions users will have to grant bluetooth permissions to SDL enabled apps. This means that if the user denies permissions for a specific app, the app will not know when the device connects to the head unit nor will it be able to start its bluetoothTransport in the routerService. With the solutions mentioned above apps that have their permissions denied will still be able to bind to another apps RouterService and will still be able to start up a routerService for a USB connection. If there are not any apps on the device with permissions then the router service would never be started when connecting over bluetooth.
+
+### AndroidManifest Exported Flag
+
+For the `SdlReceiver` and `SdlRouterService` the android guides already directed app developers to define the `android:exported` attribute and set it to true. In these cases as well since they have `intent-filters` defined this attributes default value was true. For the `SdlService` becasue there was not necessarily an `intent-filter` the default value may have been false. As mentioned prior by adding the exported attribute set to true to the `SdlService` this may pose a risk to app developers.
+
+### PendingIntent Mutable Flag
+
+The RouterService is the only place in the library currently that uses a PendingIntent and the PendingIntent is sent to the NotificationManager. With this being the case there is no need for the intent to be changed so we can flag this PendingIntent with the `PendingIntent.FLAG_IMMUTABLE` flag.
+
+### Service Notification Delays
+
+This change would be only to make sure a notification is always displayed immediately otherwise android may choose to delay the notification up to 10 seconds. If the notification is delayed there is no risk to the user and could result in a better user experience as we can hide some of the initial RouterService notifications while the routerService connects. If we choose to display the notificaiton immediately the user experience will mirror its current implementation. For the `SdlService` it will be up to the individual app developers to implement the immediate flag.
 
 ## Impact on existing code
 

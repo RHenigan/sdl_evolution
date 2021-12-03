@@ -216,7 +216,7 @@ notification = builder.build();
 
 ### Foreground Services
 
-Using `PendingIntents` to start the apps `SdlService` from the `SdlRouterService` creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stoping developers from listing that custom permission in their `AndroidManifest.xml`.   
+Using `PendingIntents` to start the apps `SdlService` from the `SdlRouterService` creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. 
 
 ### Bluetooth Runtime Permissions
 
@@ -262,9 +262,11 @@ Alternatives for the Foreground Service restrictions are limited. We either need
 
 These options would either require an Activity to be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the `SdlRouterService` connects.
 
+If we decide to use `PendingIntents` and export the `SdlService` we could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stopping developers from listing that custom permission in their `AndroidManifest.xml`.   
+
 ### Bluetooth Runtime Permissions
 
-//TODO Discuss "optimal router service" solution and limitations
+In the use case of the device only being connected over USB we could try to start the `SdlRouterService` of an application that does have Bluetooth Permissions to ensure we select a `SdlRouterService` that can start the `bluetoothTransport`. The problem with this solution is when we choose to start a `SdlRouterService` that is different than the one started by the `USBAccessoryAttachmentActivity`, the `USBTransferProvider` will try to bind to the wrong `RouterService`. This will require a larger refactor of the `USBTransferProvider`.
 
 ### PendingIntent Mutable Flag
 

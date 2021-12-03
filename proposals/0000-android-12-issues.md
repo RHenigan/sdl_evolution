@@ -248,7 +248,7 @@ The `SdlRouterService` will crash if the the app targets Android 12 and does not
 
 ### Service Notification Delays
 
-These notifications may be delayed by Android by up to 10 seconds
+These notifications may be delayed by Android by up to 10 seconds but we can modify the notification builder to display them immediately as this is the desired behaviour in some cases.
 
 ## Alternatives considered
 

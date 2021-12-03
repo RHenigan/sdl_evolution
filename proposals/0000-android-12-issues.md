@@ -11,15 +11,17 @@ With almost every Android version, Google updates the OS to better distribute th
 
 ## Motivation
 
-Starting in Android 12 Apps will no longer be able to start foreground services from the background except for in a few select cases. This will directly impact how apps are able to start their own `SdlService` implementation.
+Android 12 adds multiple restrictions on how apps can work in the background and access device resources. Some of the new restrictions that affect how SDL Android works are:
 
-Android 12 also introduces new runtime bluetooth permissions that will be required by the library ([`BLUETOOTH_CONNECT` and `BLUETOOTH_SCAN`](https://developer.android.com/about/versions/12/features#bluetooth-permissions)).
+- Apps will no longer be able to start foreground services from the background except for in a few select cases. This will directly impact how apps are able to start their own `SdlService` implementation.
+
+- Android 12 introduces new runtime Bluetooth permissions that will be required by the library to successfully establish a Bluetooth connection with the head unit ([`BLUETOOTH_CONNECT` and `BLUETOOTH_SCAN`](https://developer.android.com/about/versions/12/features#bluetooth-permissions)).
  
-Apps will also need to explicitly set the exported flag for any services, receivers, and activities in the manifest that have an `intent-filter`.
+- Apps will need to explicitly set the exported flag for any services, receivers, and activities in the manifest that have an `intent-filter`.
 
-PendingIntents also now require the mutability flag to be set in all cases which impacts some notifications sent by the router service.
+- `PendingIntents` now require the mutability flag to be set in all cases which impacts some notifications sent by the router service.
 
-Android 12 may sometimes choose to hide notifications from services for up to 10 seconds to allow the service time to finish. This should be fine in most cases but may be something that needs to be considered by the developer and may have some cases in the library where a notification should be displayed immediately.
+- Android 12 may sometimes choose to hide notifications from services for up to 10 seconds to allow short-running services to finish without interrupting the user. This is in most cases a good change. However, in some cases in the library, the notifications should be updated to be displayed immediately.
 
 ## Proposed solution
 

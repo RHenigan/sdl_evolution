@@ -333,13 +333,13 @@ These notifications may be delayed by Android by up to 10 seconds
 
 ### Foreground Services
 
-Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptiions listed by google. These conditions include:
+Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptions listed by Google. These conditions include:
 
 * Starting the Service from an Activity.
-* Starting the Service from a user interaction with a notification
+* Starting the Service from user interaction with a notification
 * Requesting the user ignores battery optimizations for each SDL Application
 
-These options would either recquire and Activity be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService conencts.
+These options would either require an Activity to be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService connects.
 
 ### Bluetooth Runtime Permissions
 

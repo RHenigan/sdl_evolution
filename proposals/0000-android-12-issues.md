@@ -343,11 +343,7 @@ These options would either recquire and Activity be launched for each SDL app, t
 
 ### Bluetooth Runtime Permissions
 
-These permissions are required to be able to receive intents withe the `ACL_CONNECTED` action in the BroadcastReceiver and to start the bluetoothTransport in the RouterService. Without these permissions we cannot know when the device connects to a device over Bluetooth nor will the RouterService be able to connect over Bluetooth.
-
-### AndroidManifest Exported Flag
-
-For the cases where this attribute is now required by Android 12. We already required developers to include this attribute.
+//TODO Discuss "optimal router service" solution and limitations
 
 ### PendingIntent Mutable Flag
 

@@ -17,7 +17,7 @@ Android 12 adds multiple restrictions on how apps can work in the background and
 
 - Android 12 introduces new runtime Bluetooth permissions that will be required by the library to successfully establish a Bluetooth connection with the head unit ([`BLUETOOTH_CONNECT` and `BLUETOOTH_SCAN`](https://developer.android.com/about/versions/12/features#bluetooth-permissions)).
  
-- Apps will need to explicitly set the exported flag for any services, receivers, and activities in the manifest that have an `intent-filter`.
+- Apps will need to explicitly set the exported flag for any services, receivers, and activities that have an `intent-filter` in the manifest.
 
 - `PendingIntents` now require the mutability flag to be set in all cases which impacts some notifications sent by the router service.
 

@@ -231,7 +231,7 @@ This change would be only to make sure a notification is always displayed immedi
 ### Foreground Services
 
 The `SdlRouterService` currently sends an intent out for each apps `SdlBroadcastReceiver` which notifies the apps to start the `SdlService`. If the app targets Android 12 and tries to start the `SdlService` from the background like this the app will crash. We will need to add a PendingIntent as an extra to this intent to be used by the `SdlReceiver`
-These changes will require app developers to change how they implement the `SdlReceiver.onReceive` method to check the incoming intent for a pendingIntent and send that pendingIntent with the appropriate class name.
+These changes will require app developers to change how they implement the `SdlReceiver.onSdlEnabled` method to check the incoming intent for a pendingIntent and send that pendingIntent with the appropriate class name.
 This implementation will also require the `SdlService` to have the `android:exported` attribute set to `true` in the `AndroidManifest.xml`.
 
 ### Bluetooth Runtime Permissions
@@ -248,7 +248,7 @@ The `SdlRouterService` will crash if the the app targets Android 12 and does not
 
 ### Service Notification Delays
 
-These notifications may be delayed by Android by up to 10 seconds
+These notifications may be delayed by Android by up to 10 seconds but we can modify the notification builder to display them immediately as this is the desired behaviour in some cases.
 
 ## Alternatives considered
 

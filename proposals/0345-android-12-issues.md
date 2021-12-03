@@ -1,6 +1,6 @@
 # Android 12 Issues
 
-* Proposal: [SDL-0000](0000-android-12-issues.md)
+* Proposal: [SDL-0345](0000-android-12-issues.md)
 * Author: [Robert Henigan](https://github.com/RHenigan)
 * Status: **Awaiting review**
 * Impacted Platforms: [Java Suite]
@@ -222,10 +222,6 @@ Using `PendingIntents` to start the apps `SdlService` from the `SdlRouterService
 
 With the new runtime permissions, users will have to grant bluetooth permissions to SDL enabled apps at runtime. This means that if the user denies permissions for a specific app, the app will not know when the device connects to the head unit over bluetooth nor will it be able to start its `bluetoothTransport` in the `SdlRouterService`. However, apps that have their bluetooth permissions denied will still be able to bind to another app's `SdlRouterService` and will still be able to start up a `SdlRouterService` for a USB connection only. If there are not any apps on the device with bluetooth permissions granted then the `SdlRouterService` would never be started when connecting over bluetooth.
 
-### Service Notification Delays
-
-This change would be only to make sure a notification is always displayed immediately otherwise android may choose to delay the notification up to 10 seconds. If the notification is delayed there is no risk to the user and could result in a better user experience as we can hide some of the initial `SdlRouterService` notifications while the `SdlRouterService` connects. If we choose to display the notification immediately the user experience will mirror its current implementation. For the `SdlService` it will be up to the individual app developers to implement the immediate flag.
-
 ## Impact on existing code
 
 ### Foreground Services
@@ -240,7 +236,7 @@ The bluetooth logic in the library will now require these 2 new runtime permissi
 
 ### AndroidManifest Exported Flag
 
-These attributes were already defined where required. 
+These attributes were already defined where required. The `SdlService` may also require this flag to be set but not as a direct result of Android 12 and rather because of the proposed Solution of starting the `SdlService` from the `SdlRouterService`.
 
 ### PendingIntent Mutable Flag
 

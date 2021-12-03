@@ -26,16 +26,17 @@ Android 12 adds multiple restrictions on how apps can work in the background and
 ## Proposed solution
 
 ### Foreground Services
-With the new restrictions around starting foreground services from the background we will need to meet one of the exceptions that Android 12 would allow tos start a foreground service from the background or we would need to start the foreground service from a foreground context.
+With the new restrictions around starting foreground services from the background we will need to meet one of the exceptions that Android 12 would allow to start a foreground service from the background or we would need to start the foreground service from a foreground context.
 
-The proposed solution for this case would be to create a PendingIntent in the SdlRouterService that can be given to the SdlBroadcastReceiver. At this point the SdlReceiver will be able to send the PendingIntent with and updated Intent where the developer specifies their unique SdlService class.
+PendingIntents allows us to send an intent on behalf of another app using the context and permissions of the application that created the PendingIntent. Since the RouterService will run in the foreground, the RouterService could create a PendingIntent to start an apps SdlService. Since the RouterService is creating the PendingIntent, the intent would be sent from the RouterServices Context.
 
-This will require that the exported flag be set to true in the manifest for the apps SdlService and an external apps RouterService would be the one starting the service.
+The PendingIntent in the SdlRouterService can be given to the SdlBroadcastReceiver. At this point the SdlReceiver will be able to send the PendingIntent with and updated Intent where the developer specifies their unique SdlService class. By calling `PendingIntent.send()` we are starting a new foreground service of the unique SdlService class from the context of the RouterService. Since the RouterService is running in the foreground we are not longer trying to start a foreground service from the background.
+
+This will require that the exported flag be set to true in the manifest for the apps SdlService as an external apps RouterService would be the one starting the service.
 
 #### Library Changes
 ~~~ java
-//AndroidTools.java
-//Creating the PendingIntent
+//Creating the PendingIntent from SdlRouterService.java
 
 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && intent.getBooleanExtra(TransportConstants.PENDING_BOOLEAN_EXTRA, false)) {
     Intent pending = new Intent();
@@ -49,10 +50,10 @@ context.sendBroadcast(intent);
 
 #### App Developer Changes
 ~~~ xml
-//AndroidManifest.xml
+<!--AndroidManifest.xml-->
 <service
     android:name="com.sdl.hellosdlandroid.SdlService"
-    android:exported="true"
+    android:exported="true" <!--New Addition-->
     android:foregroundServiceType="connectedDevice">
 </service>
 ~~~
@@ -89,13 +90,21 @@ public void onSdlEnabled(Context context, Intent intent) {
 ~~~
 
 ### Bluetooth Runtime Permissions
-With the new required Bluetooth Runtime permissions we will need developers to include the new permissions in the AndroidManifest.xml file. If the permissions are only necessary for the library and not a unique usecase in the application then the developer can specify that the `BLUETOOTH_SCAN` permission is never used for location.
+With the new required Bluetooth Runtime permissions we will need developers to include the new permissions in the AndroidManifest.xml file. 
+
+#### Developer Changes
+~~~ xml
+//AndroidManifest.xml
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT"
+    tools:targetApi="31"/>
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+    android:usesPermissionFlags="neverForLocation"
+    tools:targetApi="31" />
+~~~
 
 The developers will also need to request these permissions from the user as they are runtime permissions. If the user does not grant these permissions for a given application then that application will not receive any Intent with the `ACL_CONNECTED` action in the BroadcastReceiver.
 
-In the even that the user denies bluetooth permissions from the application this compliacts the use cases surrounding the `BroadcastReceiver` and `SdlRouterService`. If the permissions are denied for the application then the apps `BroadcastReceiver` will not receive any Intent with the `ACL_CONNECTED` action and therefore will not know to start its own RouterService when the device connects over bluetooth. In the even that all apps on the device support the `SdlDeviceListener` (SDL Library Version 4.12 and newer) we can update the `BroadcastReceiver` to try to find the first app with these permissions granted and allow that app to start up their own RouterService.
-
-We also need to consider the cases where there are applications on the device that do not support the SDLDeviceListener. In these cases another app can try to directly start the RouterService of an application that does not have the permissions and there for the router service will not be able to start up the bluetoothTransport. In this case we can update the `initCheck` within the RouterService so in the event one of these apps tries to start the router service and this app does not have the bluetooth permissions, this app can fail the initCheck and try to deploy the next router service in the list. We also need to consider devices being connected over USB. In this case we can allow the RouterService to start and wait to start the bluetoothTransport. We can present a notification to the user that will navigate them to the applications permissions page. Once the permissions are granted the RouterService can then start the bluetoothTransport.
+In the event that the user denies bluetooth permissions from the application this complicates the use cases surrounding the `BroadcastReceiver` and `SdlRouterService`. If the permissions are denied for the application then the apps `BroadcastReceiver` will not receive any Intent with the `ACL_CONNECTED` action and therefore will not know to start its own RouterService when the device connects over bluetooth. In the event that all apps on the device support the `SdlDeviceListener` (SDL Library Version 4.12 and newer) we can update the `BroadcastReceiver` to try to find the first app with these permissions granted and allow that app to start up their own RouterService.
 
 #### Library Changes
 ~~~ java
@@ -115,6 +124,11 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 }
 ~~~
 
+We also need to consider interactions with applications supporting older versions of the RouterService. In the event there is an application on the phone with SDL Library version 4.11 or older, we might run into a situation where that application tries to start another applications RouterService directly. If this happens and the application does not have Bluetooth Permissions granted then that RouterService will not be able to start the `bluetoothTransport`. The suggested solution is to update the `initCheck` within the RouterService to check the apps Bluetooth Permissions. If the permissions are not granted we can fail the initCheck and try to deploy the next RouterService.
+
+If a phone connects to the headunit over USB we can still start the RouterService but if the designated app does not have Bluetooth Permissions the `bluetoothTransport` will still not be able to start. This could cause confusion for the user if they expect the RouterService to connect over USB and Bluetooth but the RouterService will only connect over USB. The suggested solution is to present a notification to the user reminding them to enable Bluetooth Permissions. By clicking on the notification the user will be directed to the apps settings page to grant those permissions. Meanwhile the RouterService will wait to initialize the `bluetoothTransport` and will continuously check the permission status. Once the permissions are granted the `bluetoothTransport` will be started.
+
+#### Library Changes
 ~~~ java
 //SdlRouterService.java
 private boolean initCheck() {
@@ -153,75 +167,6 @@ private boolean initCheck() {
 
     return true;
 }
-
-private synchronized void initBluetoothSerialService() {
-    if (waitingForBTRuntimePermissions) {
-        return;
-    }
-
-    .....
-
-}
-
-private void showBTPermissionsNotification() {
-
-    .....
-
-    // Create an intent that will be fired when the user clicks the notification.
-    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-    Uri uri = Uri.fromParts("package", getPackageName(), null);
-    intent.setData(uri);
-    int flag = android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0;
-    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, flag);
-    builder.setContentIntent(pendingIntent);
-
-    .....
-
-}
-~~~
-
-#### Developer Changes
-~~~ xml
-//AndroidManifest.xml
-<uses-permission android:name="android.permission.BLUETOOTH_CONNECT"
-    tools:targetApi="31"/>
-<uses-permission android:name="android.permission.BLUETOOTH_SCAN"
-    android:usesPermissionFlags="neverForLocation"
-    tools:targetApi="31" />
-~~~
-
-~~~ java
-//MainActivity.java or the most appropriate location for the given app
-//Check if Permissions have been granted
-private boolean checkPermission() {
-    int btConnectPermission = ContextCompat.checkSelfPermission(getApplicationContext(), BLUETOOTH_CONNECT);
-    int btScanPermission = ContextCompat.checkSelfPermission(getApplicationContext(), BLUETOOTH_SCAN);
-
-    return btConnectPermission == PackageManager.PERMISSION_GRANTED && btScanPermission == PackageManager.PERMISSION_GRANTED;
-}
-
-//Prompt the user to grant permissions
-private void requestPermission() {
-    ActivityCompat.requestPermissions(this, new String[]{BLUETOOTH_CONNECT, BLUETOOTH_SCAN}, REQUEST_CODE);
-}
-
-//Execute if the user grants permissions
-@Override
-public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-    switch (requestCode) {
-        case REQUEST_CODE:
-            if (grantResults.length > 0) {
-
-                boolean connectAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                boolean scanAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-
-                if (connectAccepted && scanAccepted) {
-                    SdlReceiver.queryForConnectedService(this);
-                }
-            }
-            break;
-    }
-} 
 ~~~
 
 ### AndroidManifest Exported Flag
@@ -229,25 +174,22 @@ public void onRequestPermissionsResult(int requestCode, @NonNull String[] permis
 Starting in Android 12 any activities, services, or broadcast receivers that use intent filters will need to explicitly declare the `android:exported` attribute for the given app components. The `SdlRouterService` and `SdlReceiver` should already have the exported attribute defined and set to true. But The `USBAccessoryAttachmentActivity` will now also require this attribute to be set. Any activity that had an `intent-filter` would have a default exported value of true. Now we need to explicitly set it.
 
 ~~~ xml
-//AndroidManifest.xml
+<!--AndroidManifest.xml-->
 <activity
     android:name="com.smartdevicelink.transport.USBAccessoryAttachmentActivity"
-    android:exported="true"
+    android:exported="true" <!--New Addition-->
     android:launchMode="singleTop">
     <intent-filter>
         <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
     </intent-filter>
-
-    <meta-data
-        android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
-        android:resource="@xml/accessory_filter" />
+    .....
 </activity>
 
 ~~~
 
 ### PendingIntent Mutable Flag
 
-In Android 12, you must specify the mutability of each PendingIntent object that your app creates. This will impact the notifications that the RouterService is trying to display, As we do not need to update these intents at anypoint we can flag them with `FLAG_IMMUTABLE`.
+In Android 12, you must specify the mutability of each PendingIntent object that your app creates. This will impact the notifications that the RouterService is trying to display, As we do not need to update these intents at any point we can flag them with `FLAG_IMMUTABLE`.
 
 ~~~ java
 //SdlRouterService.java
@@ -262,40 +204,19 @@ Starting in Android 12 when a service tries to present a notification, Android m
 
 ~~~ java
 //SdlRouterSerivce.java
-private void safeStartForeground(int id, Notification notification) {
-    try {
-        if (notification == null) {
-            if (hasConnectedBefore && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                Notification.Builder builder =
-                        new Notification.Builder(this, SDL_NOTIFICATION_CHANNEL_ID)
-                            .setContentTitle("SmartDeviceLink")
-                            .setContentText("Service Running")
-                            .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);
-                notification = builder.build();
-            } else {
-                //Try the NotificationCompat this time in case there was a previous error
-                NotificationCompat.Builder builder =
-                        new NotificationCompat.Builder(this, SDL_NOTIFICATION_CHANNEL_ID)
-                                .setContentTitle("SmartDeviceLink")
-                                .setContentText("Service Running");
-
-                notification = builder.build();
-            }
-        }
-        startForeground(id, notification);
-        DebugTool.logInfo(TAG, "Entered the foreground - " + System.currentTimeMillis());
-    } catch (Exception e) {
-        DebugTool.logError(TAG, "Unable to start service in foreground", e);
-    }
-}
-
+Notification.Builder builder =
+new Notification.Builder(this, SDL_NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("SmartDeviceLink")
+                    .setContentText("Service Running")
+                    .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);
+notification = builder.build();
 ~~~
 
 ## Potential downsides
 
 ### Foreground Services
 
-With the proposed solution of using PendingIntents to start the apps `SdlService` from the RouterService this creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stoping developers from listing that custom permission in their `AndroidManifest.xml`.   
+With the proposed solution of using PendingIntents to start the apps `SdlService` from the RouterService this creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stopping developers from listing that custom permission in their `AndroidManifest.xml`.   
 
 ### Bluetooth Runtime Permissions
 
@@ -303,7 +224,7 @@ With the new runtime permissions users will have to grant bluetooth permissions 
 
 ### Service Notification Delays
 
-This change would be only to make sure a notification is always displayed immediately otherwise android may choose to delay the notification up to 10 seconds. If the notification is delayed there is no risk to the user and could result in a better user experience as we can hide some of the initial RouterService notifications while the routerService connects. If we choose to display the notificaiton immediately the user experience will mirror its current implementation. For the `SdlService` it will be up to the individual app developers to implement the immediate flag.
+This change would be only to make sure a notification is always displayed immediately otherwise android may choose to delay the notification up to 10 seconds. If the notification is delayed there is no risk to the user and could result in a better user experience as we can hide some of the initial RouterService notifications while the routerService connects. If we choose to display the notification immediately the user experience will mirror its current implementation. For the `SdlService` it will be up to the individual app developers to implement the immediate flag.
 
 ## Impact on existing code
 
@@ -333,13 +254,13 @@ These notifications may be delayed by Android by up to 10 seconds
 
 ### Foreground Services
 
-Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptiions listed by google. These conditions include:
+Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptions listed by google. These conditions include:
 
 * Starting the Service from an Activity.
 * Starting the Service from a user interaction with a notification
 * Requesting the user ignores battery optimizations for each SDL Application
 
-These options would either recquire and Activity be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService conencts.
+These options would either require and Activity be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService connects.
 
 ### Bluetooth Runtime Permissions
 

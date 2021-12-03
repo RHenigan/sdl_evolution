@@ -245,6 +245,8 @@ private void enterForeground(String content, long chronometerLength, boolean ong
 
 Starting in Android 12 when a service tries to present a notification, Android may delay showing the notification for up to 10 seconds. This is to try to allow the service to complete before the notification is presented. If we have connected to a system before we may want to present the `SdlRouterService` notifications immediately. App developers may also want to display the notifications related to the `SdlService` immediately. This can be achieved by setting the foregroundServiceBehavior flag to `Notification.FOREGROUND_SERVICE_IMMEDIATE`.
 
+In the event this is the first time the `SdlRouterService` is trying to connect to a system or if the `SdlRouterService` has seen but not connected with the system we will not use this flag and allow Android to hide the notification.
+
 #### Library Changes
 ##### SdlRouterService.java
 ~~~ java

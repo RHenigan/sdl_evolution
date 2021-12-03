@@ -299,7 +299,7 @@ With the proposed solution of using PendingIntents to start the apps `SdlService
 
 ### Bluetooth Runtime Permissions
 
-With the new runtime permissions users will have to grant bluetooth permissions to SDL enabled apps. This means that if the user denies permissions for a specific app, the app will not know when the device connects to the head unit nor will it be able to start its bluetoothTransport in the routerService. With the solutions mentioned above apps that have their permissions denied will still be able to bind to another apps RouterService and will still be able to start up a routerService for a USB connection. If there are not any apps on the device with permissions then the router service would never be started when connecting over bluetooth.
+With the new runtime permissions, users will have to grant bluetooth permissions to SDL enabled apps at runtime. This means that if the user denies permissions for a specific app, the app will not know when the device connects to the head unit over bluetooth nor will it be able to start its `bluetoothTransport ` in the RouterService. However, apps that have their bluetooth permissions denied will still be able to bind to another app's RouterService and will still be able to start up a RouterService for a USB connection only. If there are not any apps on the device with bluetooth permissions granted then the RouterService would never be started when connecting over bluetooth.
 
 ### Service Notification Delays
 

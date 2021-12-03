@@ -295,7 +295,7 @@ private void safeStartForeground(int id, Notification notification) {
 
 ### Foreground Services
 
-With the proposed solution of using PendingIntents to start the apps `SdlService` from the RouterService this creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stoping developers from listing that custom permission in their `AndroidManifest.xml`.   
+Using `PendingIntents` to start the apps `SdlService` from the RouterService creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stoping developers from listing that custom permission in their `AndroidManifest.xml`.   
 
 ### Bluetooth Runtime Permissions
 

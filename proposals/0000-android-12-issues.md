@@ -216,11 +216,15 @@ notification = builder.build();
 
 ### Foreground Services
 
+<<<<<<< HEAD
 With the proposed solution of using PendingIntents to start the apps `SdlService` from the RouterService this creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stopping developers from listing that custom permission in their `AndroidManifest.xml`.   
+=======
+Using `PendingIntents` to start the apps `SdlService` from the RouterService creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stoping developers from listing that custom permission in their `AndroidManifest.xml`.   
+>>>>>>> 8a32a6b79d050f6001b67052bcc54bfc0324aea0
 
 ### Bluetooth Runtime Permissions
 
-With the new runtime permissions users will have to grant bluetooth permissions to SDL enabled apps. This means that if the user denies permissions for a specific app, the app will not know when the device connects to the head unit nor will it be able to start its bluetoothTransport in the routerService. With the solutions mentioned above apps that have their permissions denied will still be able to bind to another apps RouterService and will still be able to start up a routerService for a USB connection. If there are not any apps on the device with permissions then the router service would never be started when connecting over bluetooth.
+With the new runtime permissions, users will have to grant bluetooth permissions to SDL enabled apps at runtime. This means that if the user denies permissions for a specific app, the app will not know when the device connects to the head unit over bluetooth nor will it be able to start its `bluetoothTransport ` in the RouterService. However, apps that have their bluetooth permissions denied will still be able to bind to another app's RouterService and will still be able to start up a RouterService for a USB connection only. If there are not any apps on the device with bluetooth permissions granted then the RouterService would never be started when connecting over bluetooth.
 
 ### Service Notification Delays
 
@@ -254,13 +258,21 @@ These notifications may be delayed by Android by up to 10 seconds
 
 ### Foreground Services
 
+<<<<<<< HEAD
 Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptions listed by google. These conditions include:
+=======
+Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptions listed by Google. These conditions include:
+>>>>>>> 8a32a6b79d050f6001b67052bcc54bfc0324aea0
 
 * Starting the Service from an Activity.
-* Starting the Service from a user interaction with a notification
+* Starting the Service from user interaction with a notification
 * Requesting the user ignores battery optimizations for each SDL Application
 
+<<<<<<< HEAD
 These options would either require and Activity be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService connects.
+=======
+These options would either require an Activity to be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService connects.
+>>>>>>> 8a32a6b79d050f6001b67052bcc54bfc0324aea0
 
 ### Bluetooth Runtime Permissions
 

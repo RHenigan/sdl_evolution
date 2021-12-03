@@ -126,7 +126,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 
 We also need to consider interactions with applications supporting older versions of the RouterService. In the event there is an application on the phone with SDL Library version 4.11 or older, we might run into a situation where that application tries to start another applications RouterService directly. If this happens and the application does not have Bluetooth Permissions granted then that RouterService will not be able to start the `bluetoothTransport`. The suggested solution is to update the `initCheck` within the RouterService to check the apps Bluetooth Permissions. If the permissions are not granted we can fail the initCheck and try to deploy the next RouterService.
 
-If a phone connects to the headunit over USB we can still start the RouterService but if the designated app does not have Bluetooth Permissions the `bluetoothTransport` will still not be able to start. This could cause confusion for the user if they expect the RouterService to connect over USB and Bluetooth but the RouterService will only connect over USB. The suggested solution is to present a notification to the user reminding them to enable Bluetooth Permissions. By clicking on the notification the user will be directed to the apps settings page to grant those permissions. Meanwhile the RouterService will wait to initialize the `bluetoothTransport` and will continuously check the permission status. Once the permissions are granted the `bluetoothTransport` will be started.
+If a phone connects to the head unit over USB we can still start the RouterService but if the designated app does not have Bluetooth Permissions the `bluetoothTransport` will still not be able to start. This could cause confusion for the user if they expect the RouterService to connect over USB and Bluetooth but the RouterService will only connect over USB. The suggested solution is to present a notification to the user reminding them to enable Bluetooth Permissions. By clicking on the notification the user will be directed to the apps settings page to grant those permissions. Meanwhile the RouterService will wait to initialize the `bluetoothTransport` and will continuously check the permission status. Once the permissions are granted the `bluetoothTransport` will be started.
 
 #### Library Changes
 ~~~ java
@@ -216,11 +216,7 @@ notification = builder.build();
 
 ### Foreground Services
 
-<<<<<<< HEAD
-With the proposed solution of using PendingIntents to start the apps `SdlService` from the RouterService this creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stopping developers from listing that custom permission in their `AndroidManifest.xml`.   
-=======
 Using `PendingIntents` to start the apps `SdlService` from the RouterService creates a potential security risk as the apps `SdlService` will now be required to have the `android:exported` attribute set to true. This could expose apps to have their `SdlService` be started by apps that are not SDL certified. We could also create a custom SDL `<permission>` to be used by apps as a requirement to be able to start the `SdlService` but nothing is stoping developers from listing that custom permission in their `AndroidManifest.xml`.   
->>>>>>> 8a32a6b79d050f6001b67052bcc54bfc0324aea0
 
 ### Bluetooth Runtime Permissions
 
@@ -258,21 +254,13 @@ These notifications may be delayed by Android by up to 10 seconds
 
 ### Foreground Services
 
-<<<<<<< HEAD
-Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptions listed by google. These conditions include:
-=======
 Alternatives for the Foreground Service restrictions are limited. We either need to start the `SdlService` from a foreground context or the conditions need to meet one of the exceptions listed by Google. These conditions include:
->>>>>>> 8a32a6b79d050f6001b67052bcc54bfc0324aea0
 
 * Starting the Service from an Activity.
 * Starting the Service from user interaction with a notification
 * Requesting the user ignores battery optimizations for each SDL Application
 
-<<<<<<< HEAD
-These options would either require and Activity be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService connects.
-=======
 These options would either require an Activity to be launched for each SDL app, the user to interact with a notification for each SDL app, or for the user to choose battery optimization options for each app which then creates a situation where the user dictates if the given app will have its `SdlService` start when the RouterService connects.
->>>>>>> 8a32a6b79d050f6001b67052bcc54bfc0324aea0
 
 ### Bluetooth Runtime Permissions
 

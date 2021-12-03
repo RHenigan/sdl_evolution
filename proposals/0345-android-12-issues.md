@@ -107,20 +107,21 @@ With the new required Bluetooth Runtime permissions we will need developers to i
 
 The developers will also need to request these permissions from the user as they are runtime permissions. If the user does not grant these permissions for a given application then that application will not receive any Intent with the `ACL_CONNECTED` action in the `SdlBroadcastReceiver`.
 
-In the event that the user denies bluetooth permissions from the application this complicates the use cases surrounding the `SdlBroadcastReceiver` and `SdlRouterService`. If the permissions are denied for the application then the apps `SdlBroadcastReceiver` will not receive any Intent with the `ACL_CONNECTED` action and therefore will not know to start its own `SdlRouterService` when the device connects over bluetooth. In the event that all apps on the device support the `SdlDeviceListener` (SDL Library Version 4.12 and newer) we can update the `SdlBroadcastReceiver` to try to find the first app with these permissions granted and allow that app to start up their own `SdlRouterService`.
+In the event that the user denies bluetooth permissions from the application this complicates the use cases surrounding the `SdlBroadcastReceiver` and `SdlRouterService`. If the permissions are denied for the application then the apps `SdlBroadcastReceiver` will not receive any `ACL_CONNECTED` broadcasts and therefore will not know to start its own `SdlRouterService` when the device connects over bluetooth. Other SDL Apps on the device will see that they were not the designated app to start the `SdlRouterService` and will simply do nothing meaning no `SdlRouterService` will be started even if most of the SDL Apps do have the bluetooth permissions. To correct this in the `SdlBroadcastReceiver` we can see if the designated app has the bluetooth permissions. If they do we will let them start their `SdlRouterService` as normal. If they do not we will search the list of SDL Apps for the first app with the bluetooth permissions, that app will now be considered the designated app to start its `SdlRouterService`. The designated App will then try to start its own `SdlRouterService`.
 
 #### Library Changes
 ##### SdlBroadCastReceiver.java
 ~~~ java
-//Before the SDLDeviceListener tries to start the router service
-//Get the first app that has the permissions and is aware the device connected over Bluetooth
 private boolean wakeUpRouterService(final Context context, final boolean ping, final boolean altTransportWake, final BluetoothDevice device, final VehicleType vehicleType) {
     new ServiceFinder(context, context.getPackageName(), new ServiceFinder.ServiceFinderCallback() {
         @Override
         public void onComplete(Vector<ComponentName> routerServices) {
             //...
+            //If the sdlDeviceListener is enabled we want to see if we are targeting android 12
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                //Check to see if the first app in the list has the bluetooth permissions granted
                 if (!AndroidTools.areBtPermissionsGranted(context, routerService.getPackageName()) && sdlAppInfoList.size() > 1) {
+                    //find the first app in the list that does have bluetooth permissions
                     for (SdlAppInfo appInfo : sdlAppInfoList) {
                         if (AndroidTools.areBtPermissionsGranted(context, appInfo.getRouterServiceComponentName().getPackageName())) {
                             routerService = appInfo.getRouterServiceComponentName();
@@ -129,6 +130,8 @@ private boolean wakeUpRouterService(final Context context, final boolean ping, f
                     }
                 }
             }
+            //If this app is the designated app we can start our RouterService
+            //Otherwise allow the designated app to start their RouterService
             //...
         }
     }

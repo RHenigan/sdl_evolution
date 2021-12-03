@@ -1,4 +1,4 @@
-# Feature name
+# Android 12 Issues
 
 * Proposal: [SDL-0000](0000-android-12-issues.md)
 * Author: [Robert Henigan](https://github.com/RHenigan)
@@ -267,10 +267,6 @@ If we decide to use `PendingIntents` and export the `SdlService` we could also c
 ### Bluetooth Runtime Permissions
 
 In the use case of the device only being connected over USB we could try to start the `SdlRouterService` of an application that does have Bluetooth Permissions to ensure we select a `SdlRouterService` that can start the `bluetoothTransport`. The problem with this solution is when we choose to start a `SdlRouterService` that is different than the one started by the `USBAccessoryAttachmentActivity`, the `USBTransferProvider` will try to bind to the wrong `RouterService`. This will require a larger refactor of the `USBTransferProvider`.
-
-### PendingIntent Mutable Flag
-
-The one case where PendingIntents were being used previously in the library we can set the flag to be `PendingIntent.FLAG_MUTABLE` but as we are handing the PendingIntent off to the notificationManager and the intent does not need to be changed at any point we should use `PendingIntent.FLAG_IMMUTABLE`.
 
 ### Service Notification Delays
 
